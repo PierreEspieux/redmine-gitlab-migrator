@@ -87,8 +87,19 @@ class RedmineProject(Project):
             else:
                 issue_ids_arg = ""
 
+            pattern = r"mantis_(\d+)"
+            match = re.search(pattern, self.public_url)
+
+            project_id = 1
+            if match:
+                project_id = match.group(1)
+                print("ID du projet:", project_id)
+            else:
+                print("Aucun ID de projet trouvé dans l'URL.")
+
+            print('{}/issues.json?subproject_id={}&status_id=*{}'.format(self.public_url, project_id, issue_ids_arg))
             issues = self.api.unpaginated_get(
-                '{}/issues.json?subproject_id=1&status_id=*{}'.format(self.public_url, issue_ids_arg))
+                '{}/issues.json?subproject_id={}&status_id=*{}'.format(self.public_url, project_id, issue_ids_arg))
             detailed_issues = []
             # It's impossible to get issue history from list view, so get it from
             # detail view...
@@ -99,6 +110,8 @@ class RedmineProject(Project):
                 detailed_issues.append(self.api.get(issue_url))
 
             self._cache_issues = detailed_issues
+
+            print(len(detailed_issues))
 
         return self._cache_issues
 
@@ -131,6 +144,7 @@ class RedmineProject(Project):
                 if not entry.get('notes', None):
                     continue
                 user_ids.add(entry['user']['id'])
+
 
         for i in user_ids:
             # The anonymous user is not really part of the project...
